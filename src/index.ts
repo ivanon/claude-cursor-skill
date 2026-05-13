@@ -91,7 +91,6 @@ export async function executeSkill(
     cwd,
     onEvent: (e) => events.push(e),
     model: config.defaultModel,
-    verbose: intent.verbose,
   })
 
   const result = formatEvents(events, { verbose: intent.verbose })

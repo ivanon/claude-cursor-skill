@@ -15,7 +15,6 @@ export type RunCursorAgentOptions = {
   onEvent: (event: CursorEvent) => void
   timeoutMs?: number
   model?: string
-  verbose?: boolean
 }
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000
