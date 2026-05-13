@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Build output
+dist/
+
+# Development artifacts
+.agents/
+docs/.DS_Store
+docs/code-review/
+docs/plans/
+docs/specs/
+docs/design.md
+docs/superpowers/
