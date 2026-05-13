@@ -163,4 +163,21 @@ describe("executeSkill", () => {
 
     expect(buildImplementPrompt).toHaveBeenCalledWith("实现登录功能", undefined, "/workspace")
   })
+
+  it("passes verbose to formatEvents when user requests detailed output", async () => {
+    vi.mocked(runCursorAgent).mockImplementation(async ({ onEvent }) => {
+      onEvent({ type: "result", status: "FINISHED" })
+    })
+
+    const intent: ParsedIntent = {
+      taskType: "review",
+      targetFile: "src/auth.ts",
+      userRequest: "review src/auth.ts verbose",
+      verbose: true,
+    }
+
+    await executeSkill(intent, "/workspace")
+
+    expect(formatEvents).toHaveBeenCalledWith(expect.any(Array), { verbose: true })
+  })
 })

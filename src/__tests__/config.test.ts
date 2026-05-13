@@ -60,4 +60,49 @@ describe("resolveConfig", () => {
     process.env.CURSOR_API_KEY = "invalid_key"
     expect(() => resolveConfig()).toThrow(ConfigError)
   })
+
+  it("reads CURSOR_MODEL from environment variable", () => {
+    process.env.CURSOR_API_KEY = "crsr_env_key"
+    process.env.CURSOR_MODEL = "composer-3"
+    const config = resolveConfig()
+    expect(config.defaultModel).toBe("composer-3")
+    delete process.env.CURSOR_MODEL
+  })
+
+  it("reads defaultModel from settings file", () => {
+    const settingsDir = join(tmpDir, ".cursor-skill")
+    mkdirSync(settingsDir, { recursive: true })
+    writeFileSync(
+      join(settingsDir, "settings.json"),
+      JSON.stringify({ cursorApiKey: "crsr_file_key", defaultModel: "composer-2" })
+    )
+    const config = resolveConfig()
+    expect(config.defaultModel).toBe("composer-2")
+  })
+
+  it("prefers CURSOR_MODEL over settings defaultModel", () => {
+    process.env.CURSOR_API_KEY = "crsr_env_key"
+    process.env.CURSOR_MODEL = "composer-3"
+    const settingsDir = join(tmpDir, ".cursor-skill")
+    mkdirSync(settingsDir, { recursive: true })
+    writeFileSync(
+      join(settingsDir, "settings.json"),
+      JSON.stringify({ cursorApiKey: "crsr_file_key", defaultModel: "composer-2" })
+    )
+    const config = resolveConfig()
+    expect(config.defaultModel).toBe("composer-3")
+    delete process.env.CURSOR_MODEL
+  })
+
+  it("reads defaultModel from settings when env key exists without CURSOR_MODEL", () => {
+    process.env.CURSOR_API_KEY = "crsr_env_key"
+    const settingsDir = join(tmpDir, ".cursor-skill")
+    mkdirSync(settingsDir, { recursive: true })
+    writeFileSync(
+      join(settingsDir, "settings.json"),
+      JSON.stringify({ cursorApiKey: "crsr_file_key", defaultModel: "composer-2" })
+    )
+    const config = resolveConfig()
+    expect(config.defaultModel).toBe("composer-2")
+  })
 })
