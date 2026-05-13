@@ -41,6 +41,8 @@ export function resolveConfig(): CursorConfig {
 }
 
 function validateKey(key: string): void {
+  // NOTE: This prefix check is based on current Cursor API key format.
+  // Update this if Cursor changes their key format.
   if (!key.startsWith("crsr_")) {
     throw new ConfigError(
       `Invalid Cursor API key format. Key must start with "crsr_".`
