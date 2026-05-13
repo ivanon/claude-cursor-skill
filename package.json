@@ -1,6 +1,6 @@
 {
   "name": "claude-cursor-agent-skill",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Claude Code skill that invokes Cursor's coding agent for code review and TDD-based implementation",
   "type": "module",
   "packageManager": "pnpm@10.9.0",
