@@ -20,7 +20,7 @@ npm install -g claude-cursor-agent-skill
 ### 2. Register Skill (for Claude Code)
 
 ```bash
-npx skills add claude-cursor-agent-skill -y -g
+npx skills add ivanon/claude-cursor-skill -y -g
 ```
 
 ### 3. Configure Cursor API Key
