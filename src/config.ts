@@ -17,16 +17,16 @@ export type CursorConfig = {
 export function resolveConfig(): CursorConfig {
   const envKey = process.env.CURSOR_API_KEY?.trim()
   const envModel = process.env.CURSOR_MODEL?.trim()
+  const fileSettings = readSettingsFile()
 
   if (envKey) {
     validateKey(envKey)
     return {
       apiKey: envKey,
-      defaultModel: envModel,
+      defaultModel: envModel ?? fileSettings?.defaultModel,
     }
   }
 
-  const fileSettings = readSettingsFile()
   if (fileSettings?.apiKey) {
     validateKey(fileSettings.apiKey)
     return {
