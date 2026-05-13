@@ -18,6 +18,8 @@ export type RunCursorAgentOptions = {
 }
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000
+const MAX_RETRIES = 3
+const RETRY_DELAYS_MS = [1000, 2000, 4000]
 
 export async function runCursorAgent(options: RunCursorAgentOptions): Promise<void> {
   const { apiKey, prompt, cwd, onEvent, timeoutMs = DEFAULT_TIMEOUT_MS, model } = options
@@ -32,9 +34,9 @@ export async function runCursorAgent(options: RunCursorAgentOptions): Promise<vo
     agentOptions.model = { id: model }
   }
 
-  const agent = await Agent.create(agentOptions)
+  const agent = await withRetry(() => Agent.create(agentOptions), "Agent.create")
 
-  const run = await agent.send(prompt)
+  const run = await withRetry(() => agent.send(prompt), "agent.send")
   const timeoutId = setTimeout(() => {
     if (run.supports("cancel")) {
       run.cancel().catch(() => undefined)
@@ -63,6 +65,47 @@ export async function runCursorAgent(options: RunCursorAgentOptions): Promise<vo
       }
     }
   }
+}
+
+async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      if (attempt >= MAX_RETRIES || !isRetryableError(error)) {
+        break
+      }
+      await sleep(RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS.at(-1)!)
+    }
+  }
+
+  throw new Error(`${label} failed after ${MAX_RETRIES + 1} attempts: ${formatError(lastError)}`)
+}
+
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase()
+    return (
+      msg.includes("timeout") ||
+      msg.includes("network") ||
+      msg.includes("econnrefused") ||
+      msg.includes("econnreset") ||
+      msg.includes("ENOTFOUND") ||
+      msg.includes("5")
+    )
+  }
+  return false
+}
+
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 function emitEvent(sdkEvent: unknown, emit: (event: CursorEvent) => void) {
