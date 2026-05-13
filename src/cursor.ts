@@ -96,7 +96,7 @@ async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
   throw new Error(`${label} failed after ${MAX_RETRIES + 1} attempts: ${formatError(lastError)}`)
 }
 
-function isRetryableError(error: unknown): boolean {
+export function isRetryableError(error: unknown): boolean {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase()
     return (

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { runCursorAgent, type CursorEvent } from "../cursor.js"
+import { runCursorAgent, isRetryableError, type CursorEvent } from "../cursor.js"
 
 const mockStream = vi.fn()
 const mockWait = vi.fn()
@@ -143,5 +143,51 @@ describe("runCursorAgent", () => {
     ).rejects.toThrow()
 
     expect(mockDispose).toHaveBeenCalled()
+  })
+
+  it("disposes agent when agent.send fails after retries", async () => {
+    mockSend.mockRejectedValue(new Error("status code 503"))
+
+    await expect(
+      runCursorAgent({
+        apiKey: "crsr_test",
+        prompt: "test",
+        cwd: "/workspace",
+        onEvent: () => {},
+      })
+    ).rejects.toThrow()
+
+    expect(mockDispose).toHaveBeenCalledTimes(1)
+  }, 10000)
+})
+
+describe("isRetryableError", () => {
+  it("returns true for timeout errors", () => {
+    expect(isRetryableError(new Error("Request timeout"))).toBe(true)
+  })
+
+  it("returns true for 5xx status codes", () => {
+    expect(isRetryableError(new Error("status code 502"))).toBe(true)
+    expect(isRetryableError(new Error("status code 503"))).toBe(true)
+    expect(isRetryableError(new Error("status code 500"))).toBe(true)
+  })
+
+  it("returns true for 5xx shorthand", () => {
+    expect(isRetryableError(new Error("Server returned 5xx"))).toBe(true)
+  })
+
+  it("returns false for 4xx errors", () => {
+    expect(isRetryableError(new Error("status code 401"))).toBe(false)
+    expect(isRetryableError(new Error("status code 404"))).toBe(false)
+  })
+
+  it("returns false for unrelated errors containing digit 5", () => {
+    expect(isRetryableError(new Error("sha256 mismatch"))).toBe(false)
+    expect(isRetryableError(new Error("line 5: syntax error"))).toBe(false)
+  })
+
+  it("returns false for non-Error values", () => {
+    expect(isRetryableError("timeout")).toBe(false)
+    expect(isRetryableError(null)).toBe(false)
   })
 })
