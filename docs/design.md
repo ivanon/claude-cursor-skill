@@ -38,18 +38,30 @@ Claude receives stream → formats → delivers to user
 **User input examples:**
 - "帮我review一下这个文档"
 - "让cursor评审一下 src/auth.ts"
-- "review一下这个PR的代码"
+- "根据 docs/plan/implementation.md 评审一下代码实现"
 
-**Cursor system prompt:**
+**Cursor system prompt (adaptive by file type):**
 ```
-You are a code reviewer. Review the following file carefully and provide
-detailed feedback on: code quality, potential bugs, performance issues,
-security concerns, and suggestions for improvement.
+You are a technical reviewer. Review the provided content carefully.
+
+For code files: evaluate code quality, potential bugs, performance issues,
+security concerns, and suggest improvements.
+
+For design docs / implementation plans: evaluate structural clarity,
+logical consistency, terminology accuracy, completeness of requirements,
+and feasibility of the proposed approach.
 ```
 
-**User prompt:**
+**User prompt (single file review):**
 ```
 Review the file at: {filePath}
+```
+
+**User prompt (plan-based code review):**
+```
+Review the codebase implementation against the plan at {planFilePath}.
+Start from the repository root {cwd}. Check that the implementation
+matches the plan, identify deviations, missing features, and suggest fixes.
 ```
 
 **Output:** Cursor's assistant response is formatted and shown to the user. If an output file is specified, the result is saved there.
@@ -68,10 +80,17 @@ You are a coding assistant. Implement the requested feature using TDD
 to make them pass. Write clean, well-documented code.
 ```
 
-**User prompt:**
+**User prompt (with explicit output path):**
 ```
 Implement the following feature: {userRequest}
 Output the implementation to: {outputPath}
+```
+
+**User prompt (without output path):**
+```
+Implement the following feature: {userRequest}
+Work in the repository at {cwd}. Choose appropriate file locations for the
+implementation. Follow existing project conventions.
 ```
 
 **Output:** Cursor directly modifies/creates files in the workspace. Claude reports which files were changed and shows a summary/diff.
@@ -84,13 +103,14 @@ Claude extracts the following from user natural language:
 |-------|-------------|---------|
 | `taskType` | `review` or `implement` | "review" from "帮我review一下" |
 | `targetFile` | File to review or base context | "docs/api.md" |
+| `planFile` | Implementation plan to compare against (plan-based review) | "docs/plan.md" |
 | `outputFile` | Where to save results (optional) | "review-result.md" |
 | `userRequest` | The raw implementation request | "给 auth.ts 加 JWT 验证" |
 
 **Parsing rules:**
-- Task type is inferred from keywords: "review", "评审", "评审" → `review`; "实现", "implement", "写", "加" → `implement`
+- Task type is inferred from keywords: "review", "评审", "检查", "看看" → `review`; "实现", "implement", "写", "加" → `implement`
 - File paths are extracted from the message (regex for path-like strings)
-- If no file path is found, the skill uses the file currently active in the Claude Code conversation context
+- If no file path is found, the skill uses the file path provided by Claude Code through the function call context. The skill itself does not attempt to detect the active file; it relies on Claude to inject this context.
 - Output file is extracted after keywords like "输出到", "保存到", "output to"
 
 ## Configuration
@@ -139,6 +159,8 @@ const result = await run.wait()
 
 ### Stream Event Handling (Smart Output)
 
+> **Note:** Event type names and shapes are defined by `@cursor/sdk`. The table below uses conceptual names; refer to the SDK's actual type definitions for the authoritative schema.
+
 | Event Type | Default Behavior | Verbose Mode |
 |------------|-----------------|--------------|
 | `assistant` | Collect text, output at end | Stream in real-time |
@@ -174,6 +196,12 @@ const result = await run.wait()
 const TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 ```
 
+**Security & Operations:**
+- API key file `~/.cursor-skill/settings.json` must be created with `0600` permissions (user read/write only)
+- Never commit the settings file or API keys to version control
+- Network retries use exponential backoff (1s, 2s, 4s) and only retry on transient errors (network timeout, 5xx)
+- Non-retryable errors (4xx auth errors) fail immediately
+
 ## File Structure
 
 ```
@@ -196,7 +224,7 @@ claude-cursor-skill/
 - `index.ts` — Parse user input, determine task type, call cursor.ts, deliver results
 - `cursor.ts` — Create agent, send prompt, stream events with timeout/cancel
 - `config.ts` — Read env var and `~/.cursor-skill/settings.json`, validate key
-- `prompts.ts` — `buildReviewPrompt(targetFile)`, `buildImplementPrompt(request, outputPath)`
+- `prompts.ts` — `buildReviewPrompt(targetFile)`, `buildPlanBasedReviewPrompt(planFile, cwd)`, `buildImplementPrompt(request, outputPath?)`
 - `output.ts` — Format assistant output, save to file, show diff summary
 
 ## Dependencies
