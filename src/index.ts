@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs"
+import { resolve } from "node:path"
 import { resolveConfig } from "./config.js"
 import {
   buildReviewPrompt,
@@ -63,6 +65,8 @@ export async function executeSkill(
 ): Promise<string> {
   const config = resolveConfig()
 
+  validateFilesExist(intent, cwd)
+
   let prompt: string
   if (intent.taskType === "review") {
     if (intent.planFile) {
@@ -91,4 +95,17 @@ export async function executeSkill(
   }
 
   return result
+}
+
+function validateFilesExist(intent: ParsedIntent, cwd: string): void {
+  const filesToCheck: string[] = []
+  if (intent.targetFile) filesToCheck.push(intent.targetFile)
+  if (intent.planFile) filesToCheck.push(intent.planFile)
+
+  for (const file of filesToCheck) {
+    const fullPath = resolve(cwd, file)
+    if (!existsSync(fullPath)) {
+      throw new Error(`File not found: ${file}`)
+    }
+  }
 }

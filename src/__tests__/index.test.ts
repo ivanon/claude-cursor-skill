@@ -12,11 +12,15 @@ vi.mock("../output.js", () => ({
   formatEvents: vi.fn(),
   saveToFile: vi.fn(),
 }))
+vi.mock("node:fs", () => ({
+  existsSync: vi.fn(() => true),
+}))
 
 import { resolveConfig } from "../config.js"
 import { buildReviewPrompt, buildImplementPrompt } from "../prompts.js"
 import { runCursorAgent } from "../cursor.js"
 import { formatEvents, saveToFile } from "../output.js"
+import { existsSync } from "node:fs"
 
 describe("parseIntent", () => {
   it("detects review task from keywords", () => {
@@ -113,5 +117,17 @@ describe("executeSkill", () => {
     await executeSkill(intent, "/workspace")
 
     expect(saveToFile).toHaveBeenCalledWith("formatted result", "result.md")
+  })
+
+  it("throws when target file does not exist", async () => {
+    vi.mocked(existsSync).mockReturnValue(false)
+
+    const intent: ParsedIntent = {
+      taskType: "review",
+      targetFile: "missing.ts",
+      userRequest: "review missing.ts",
+    }
+
+    await expect(executeSkill(intent, "/workspace")).rejects.toThrow("File not found: missing.ts")
   })
 })
