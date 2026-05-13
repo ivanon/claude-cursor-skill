@@ -37,7 +37,14 @@ export async function runCursorAgent(options: RunCursorAgentOptions): Promise<vo
 
   const agent = await withRetry(() => Agent.create(agentOptions), "Agent.create")
 
-  const run = await withRetry(() => agent.send(prompt), "agent.send")
+  let run: Awaited<ReturnType<typeof agent.send>>
+  try {
+    run = await withRetry(() => agent.send(prompt), "agent.send")
+  } catch (error) {
+    await disposeAgent(agent)
+    throw error
+  }
+
   const timeoutId = setTimeout(() => {
     if (run.supports("cancel")) {
       run.cancel().catch(() => undefined)
@@ -57,13 +64,17 @@ export async function runCursorAgent(options: RunCursorAgentOptions): Promise<vo
     })
   } finally {
     clearTimeout(timeoutId)
-    const dispose = agent[Symbol.asyncDispose]
-    if (typeof dispose === "function") {
-      try {
-        await dispose.call(agent)
-      } catch {
-        // ignore dispose errors
-      }
+    await disposeAgent(agent)
+  }
+}
+
+async function disposeAgent(agent: { [Symbol.asyncDispose]?: () => Promise<void> }): Promise<void> {
+  const dispose = agent[Symbol.asyncDispose]
+  if (typeof dispose === "function") {
+    try {
+      await dispose.call(agent)
+    } catch {
+      // ignore dispose errors
     }
   }
 }
