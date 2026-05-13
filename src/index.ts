@@ -21,16 +21,17 @@ export function parseIntent(input: string): ParsedIntent {
   const taskType = /review|评审|检查|看看/.test(text) ? "review" : "implement"
 
   const paths = extractPaths(input)
-  const targetFile = paths[0]
-  const planFile = /根据|对照|按照|against/.test(text) ? paths[0] : undefined
-  const actualTarget = planFile ? paths[1] : targetFile
+  const planFile = extractPlanFile(input, paths)
+  const targetFile = planFile
+    ? paths.find((p) => p !== planFile)
+    : paths[0]
 
   const outputMatch = input.match(/(?:输出到|保存到|output to)\s+(\S+)/)
   const outputFile = outputMatch?.[1]
 
   return {
     taskType,
-    targetFile: actualTarget,
+    targetFile,
     planFile,
     outputFile,
     userRequest: input,
@@ -38,8 +39,22 @@ export function parseIntent(input: string): ParsedIntent {
 }
 
 function extractPaths(text: string): string[] {
-  const matches = text.match(/(?:[\w-]+\/)+[\w.-]+/g) ?? []
+  const matches = text.match(/(?:[\w-]+\/)+[\w.-]+|[\w-]+\.[\w.-]+/g) ?? []
   return matches
+}
+
+function extractPlanFile(input: string, paths: string[]): string | undefined {
+  const planKeywords = /根据|对照|按照|against/g
+  let match: RegExpExecArray | null
+
+  while ((match = planKeywords.exec(input.toLowerCase())) !== null) {
+    const keywordPos = match.index + match[0].length
+    const afterKeyword = input.slice(keywordPos)
+    const firstPathAfter = paths.find((p) => afterKeyword.includes(p))
+    if (firstPathAfter) return firstPathAfter
+  }
+
+  return undefined
 }
 
 export async function executeSkill(

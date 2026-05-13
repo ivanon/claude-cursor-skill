@@ -44,6 +44,29 @@ describe("parseIntent", () => {
     const result = parseIntent("review src/auth.ts 输出到 result.md")
     expect(result.outputFile).toBe("result.md")
   })
+
+  it("handles reversed order in plan-based review", () => {
+    const result = parseIntent("评审 src/foo.ts 根据 docs/plan.md")
+    expect(result.taskType).toBe("review")
+    expect(result.planFile).toBe("docs/plan.md")
+    expect(result.targetFile).toBe("src/foo.ts")
+  })
+
+  it("extracts root-level filenames", () => {
+    const result = parseIntent("review auth.ts")
+    expect(result.targetFile).toBe("auth.ts")
+  })
+
+  it("extracts README as target file", () => {
+    const result = parseIntent("检查 README.md")
+    expect(result.targetFile).toBe("README.md")
+  })
+
+  it("separates planFile and targetFile when both present", () => {
+    const result = parseIntent("根据 docs/api.md 评审 src/auth.ts")
+    expect(result.planFile).toBe("docs/api.md")
+    expect(result.targetFile).toBe("src/auth.ts")
+  })
 })
 
 describe("executeSkill", () => {
