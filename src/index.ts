@@ -65,7 +65,8 @@ function extractPlanFile(input: string, paths: string[]): string | undefined {
 
 export async function executeSkill(
   intent: ParsedIntent,
-  cwd: string
+  cwd: string,
+  onEvent?: (event: CursorEvent) => void
 ): Promise<string> {
   const config = resolveConfig()
 
@@ -89,7 +90,10 @@ export async function executeSkill(
     apiKey: config.apiKey,
     prompt,
     cwd,
-    onEvent: (e) => events.push(e),
+    onEvent: (e) => {
+      events.push(e)
+      onEvent?.(e)
+    },
     model: config.defaultModel,
   })
 

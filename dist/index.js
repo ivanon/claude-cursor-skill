@@ -40,7 +40,7 @@ function extractPlanFile(input, paths) {
     }
     return undefined;
 }
-export async function executeSkill(intent, cwd) {
+export async function executeSkill(intent, cwd, onEvent) {
     const config = resolveConfig();
     validateFilesExist(intent, cwd);
     let prompt;
@@ -63,7 +63,10 @@ export async function executeSkill(intent, cwd) {
         apiKey: config.apiKey,
         prompt,
         cwd,
-        onEvent: (e) => events.push(e),
+        onEvent: (e) => {
+            events.push(e);
+            onEvent?.(e);
+        },
         model: config.defaultModel,
     });
     const result = formatEvents(events, { verbose: intent.verbose });

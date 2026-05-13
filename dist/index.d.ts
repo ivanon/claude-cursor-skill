@@ -1,3 +1,4 @@
+import { type CursorEvent } from "./cursor.js";
 export type ParsedIntent = {
     taskType: "review" | "implement";
     targetFile?: string;
@@ -7,5 +8,5 @@ export type ParsedIntent = {
     verbose?: boolean;
 };
 export declare function parseIntent(input: string): ParsedIntent;
-export declare function executeSkill(intent: ParsedIntent, cwd: string): Promise<string>;
+export declare function executeSkill(intent: ParsedIntent, cwd: string, onEvent?: (event: CursorEvent) => void): Promise<string>;
 //# sourceMappingURL=index.d.ts.map
