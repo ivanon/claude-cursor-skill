@@ -68,9 +68,22 @@ Claude formats and delivers result
 ## Development
 
 ```bash
-pnpm install
-pnpm dev     # Run with tsx
-pnpm build   # Compile TypeScript
+npm install
+npm run dev      # Run with tsx
+npm run build    # Compile TypeScript
+npm test         # Run all tests
+npm run typecheck # Type check without emit
+```
+
+## Project Structure
+
+```
+src/
+├── index.ts      # Entry: intent parsing and orchestration
+├── cursor.ts     # Cursor SDK wrapper (streaming, timeout)
+├── config.ts     # API key resolution
+├── prompts.ts    # Prompt templates for review and implement
+└── output.ts     # Result formatting and file I/O
 ```
 
 ## License
