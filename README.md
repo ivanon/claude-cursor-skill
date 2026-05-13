@@ -65,10 +65,10 @@ cursor-agent review src/auth.ts --verbose
 
 ## Usage in Claude Code
 
-Once the skill is registered, simply say:
+Once the skill is registered, **explicitly mention "cursor"** to trigger it:
 
 ```
-帮我review一下这个文档
+使用cursor帮我review一下这个文档
 ```
 
 ```
@@ -78,6 +78,12 @@ Once the skill is registered, simply say:
 ```
 让cursor实现一个JWT中间件，输出到 src/middleware/jwt.ts
 ```
+
+```
+用cursor检查一下这段代码
+```
+
+If you don't mention "cursor", Claude will handle the request itself without invoking this skill.
 
 ## Development
 

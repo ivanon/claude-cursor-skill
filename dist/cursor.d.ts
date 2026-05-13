@@ -27,6 +27,8 @@ export type RunCursorAgentOptions = {
     cwd: string;
     onEvent: (event: CursorEvent) => void;
     timeoutMs?: number;
+    model?: string;
 };
 export declare function runCursorAgent(options: RunCursorAgentOptions): Promise<void>;
+export declare function isRetryableError(error: unknown): boolean;
 //# sourceMappingURL=cursor.d.ts.map

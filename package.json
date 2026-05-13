@@ -46,7 +46,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-org/claude-cursor-agent-skill.git"
+    "url": "git+https://github.com/ivanon/claude-cursor-skill.git"
   },
   "license": "MIT",
   "keywords": [

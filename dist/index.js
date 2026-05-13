@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { resolveConfig } from "./config.js";
 import { buildReviewPrompt, buildPlanBasedReviewPrompt, buildImplementPrompt, } from "./prompts.js";
 import { runCursorAgent } from "./cursor.js";
@@ -6,25 +8,41 @@ export function parseIntent(input) {
     const text = input.toLowerCase();
     const taskType = /review|评审|检查|看看/.test(text) ? "review" : "implement";
     const paths = extractPaths(input);
-    const targetFile = paths[0];
-    const planFile = /根据|对照|按照|against/.test(text) ? paths[0] : undefined;
-    const actualTarget = planFile ? paths[1] : targetFile;
+    const planFile = extractPlanFile(input, paths);
+    const targetFile = planFile
+        ? paths.find((p) => p !== planFile)
+        : paths[0];
     const outputMatch = input.match(/(?:输出到|保存到|output to)\s+(\S+)/);
     const outputFile = outputMatch?.[1];
+    const verbose = /\b(verbose|详细)\b/i.test(input);
     return {
         taskType,
-        targetFile: actualTarget,
+        targetFile,
         planFile,
         outputFile,
+        verbose,
         userRequest: input,
     };
 }
 function extractPaths(text) {
-    const matches = text.match(/(?:[\w-]+\/)+[\w.-]+/g) ?? [];
+    const matches = text.match(/(?:[\w-]+\/)+[\w.-]+|[\w-]+\.[\w.-]+/g) ?? [];
     return matches;
+}
+function extractPlanFile(input, paths) {
+    const planKeywords = /根据|对照|按照|against/g;
+    let match;
+    while ((match = planKeywords.exec(input.toLowerCase())) !== null) {
+        const keywordPos = match.index + match[0].length;
+        const afterKeyword = input.slice(keywordPos);
+        const firstPathAfter = paths.find((p) => afterKeyword.includes(p));
+        if (firstPathAfter)
+            return firstPathAfter;
+    }
+    return undefined;
 }
 export async function executeSkill(intent, cwd) {
     const config = resolveConfig();
+    validateFilesExist(intent, cwd);
     let prompt;
     if (intent.taskType === "review") {
         if (intent.planFile) {
@@ -46,11 +64,25 @@ export async function executeSkill(intent, cwd) {
         prompt,
         cwd,
         onEvent: (e) => events.push(e),
+        model: config.defaultModel,
     });
-    const result = formatEvents(events);
+    const result = formatEvents(events, { verbose: intent.verbose });
     if (intent.outputFile) {
         await saveToFile(result, intent.outputFile);
     }
     return result;
+}
+function validateFilesExist(intent, cwd) {
+    const filesToCheck = [];
+    if (intent.targetFile)
+        filesToCheck.push(intent.targetFile);
+    if (intent.planFile)
+        filesToCheck.push(intent.planFile);
+    for (const file of filesToCheck) {
+        const fullPath = resolve(cwd, file);
+        if (!existsSync(fullPath)) {
+            throw new Error(`File not found: ${file}`);
+        }
+    }
 }
 //# sourceMappingURL=index.js.map

@@ -1,7 +1,7 @@
 ---
 name: cursor-agent
 version: 1.0.0
-description: "调用 Cursor 编码代理执行代码评审和 TDD 实现。支持文档/代码 review、根据实现计划 review、以及 TDD 方式实现功能。当用户说'帮我 review'、'评审'、'让 cursor 实现'、'写测试'等时触发。"
+description: "调用 Cursor 编码代理执行代码评审和 TDD 实现。支持文档/代码 review、根据实现计划 review、以及 TDD 方式实现功能。仅在用户明确提到 'cursor' 或 'Cursor' 时触发，例如 '使用cursor帮我review'、'让cursor实现'。"
 metadata:
   requires:
     env: ["CURSOR_API_KEY"]
@@ -11,14 +11,20 @@ metadata:
 
 ## 触发条件
 
-用户说以下类型的话时，使用本 skill：
+**仅在用户明确提到 "cursor" 或 "Cursor" 时触发**，例如：
 
-- "帮我 review 一下这个文档"
-- "评审一下 src/auth.ts"
-- "根据 docs/plan.md 评审代码实现"
-- "让 cursor 实现登录功能"
-- "给这个模块加单元测试"
-- "检查一下这段代码"
+- "使用cursor帮我review一下这个文档"
+- "让cursor评审一下 src/auth.ts"
+- "根据 docs/plan.md 用cursor评审代码实现"
+- "让cursor实现登录功能"
+- "用cursor给这个模块加单元测试"
+- "cursor检查一下这段代码"
+
+**不触发的情况**（用户未提到 cursor）：
+
+- "帮我review一下这个文档" → 不触发，由 Claude 自行处理
+- "评审一下 src/auth.ts" → 不触发，由 Claude 自行处理
+- "实现登录功能" → 不触发，由 Claude 自行处理
 
 ## 执行方式
 
