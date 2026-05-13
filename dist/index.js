@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { resolveConfig } from "./config.js";
 import { buildReviewPrompt, buildPlanBasedReviewPrompt, buildImplementPrompt, } from "./prompts.js";
 import { runCursorAgent } from "./cursor.js";
-import { formatEvents, saveToFile } from "./output.js";
+import { formatEvents } from "./output.js";
 export function parseIntent(input) {
     const text = input.toLowerCase();
     const taskType = /review|评审|检查|看看/.test(text) ? "review" : "implement";
@@ -46,10 +46,10 @@ export async function executeSkill(intent, cwd, onEvent) {
     let prompt;
     if (intent.taskType === "review") {
         if (intent.planFile) {
-            prompt = buildPlanBasedReviewPrompt(intent.planFile, cwd);
+            prompt = buildPlanBasedReviewPrompt(intent.planFile, cwd, intent.outputFile);
         }
         else if (intent.targetFile) {
-            prompt = buildReviewPrompt(intent.targetFile);
+            prompt = buildReviewPrompt(intent.targetFile, intent.outputFile);
         }
         else {
             throw new Error("Review requires a target file or plan file.");
@@ -69,11 +69,7 @@ export async function executeSkill(intent, cwd, onEvent) {
         },
         model: config.defaultModel,
     });
-    const result = formatEvents(events, { verbose: intent.verbose });
-    if (intent.outputFile && intent.taskType === "review") {
-        await saveToFile(result, intent.outputFile);
-    }
-    return result;
+    return formatEvents(events, { verbose: intent.verbose });
 }
 function validateFilesExist(intent, cwd) {
     const filesToCheck = [];

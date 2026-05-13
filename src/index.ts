@@ -7,7 +7,7 @@ import {
   buildImplementPrompt,
 } from "./prompts.js"
 import { runCursorAgent, type CursorEvent } from "./cursor.js"
-import { formatEvents, saveToFile } from "./output.js"
+import { formatEvents } from "./output.js"
 
 export type ParsedIntent = {
   taskType: "review" | "implement"
@@ -75,9 +75,9 @@ export async function executeSkill(
   let prompt: string
   if (intent.taskType === "review") {
     if (intent.planFile) {
-      prompt = buildPlanBasedReviewPrompt(intent.planFile, cwd)
+      prompt = buildPlanBasedReviewPrompt(intent.planFile, cwd, intent.outputFile)
     } else if (intent.targetFile) {
-      prompt = buildReviewPrompt(intent.targetFile)
+      prompt = buildReviewPrompt(intent.targetFile, intent.outputFile)
     } else {
       throw new Error("Review requires a target file or plan file.")
     }
@@ -97,13 +97,7 @@ export async function executeSkill(
     model: config.defaultModel,
   })
 
-  const result = formatEvents(events, { verbose: intent.verbose })
-
-  if (intent.outputFile && intent.taskType === "review") {
-    await saveToFile(result, intent.outputFile)
-  }
-
-  return result
+  return formatEvents(events, { verbose: intent.verbose })
 }
 
 function validateFilesExist(intent: ParsedIntent, cwd: string): void {

@@ -98,12 +98,12 @@ describe("executeSkill", () => {
     const result = await executeSkill(intent, "/workspace")
 
     expect(resolveConfig).toHaveBeenCalled()
-    expect(buildReviewPrompt).toHaveBeenCalledWith("src/auth.ts")
+    expect(buildReviewPrompt).toHaveBeenCalledWith("src/auth.ts", undefined)
     expect(runCursorAgent).toHaveBeenCalled()
     expect(result).toBe("formatted result")
   })
 
-  it("saves output to file when outputFile is set", async () => {
+  it("passes outputFile to review prompt", async () => {
     vi.mocked(runCursorAgent).mockImplementation(async ({ onEvent }) => {
       onEvent({ type: "result", status: "FINISHED" })
     })
@@ -117,7 +117,7 @@ describe("executeSkill", () => {
 
     await executeSkill(intent, "/workspace")
 
-    expect(saveToFile).toHaveBeenCalledWith("formatted result", "result.md")
+    expect(buildReviewPrompt).toHaveBeenCalledWith("src/auth.ts", "result.md")
   })
 
   it("throws when target file does not exist", async () => {
@@ -146,7 +146,7 @@ describe("executeSkill", () => {
 
     await executeSkill(intent, "/workspace")
 
-    expect(buildPlanBasedReviewPrompt).toHaveBeenCalledWith("docs/plan.md", "/workspace")
+    expect(buildPlanBasedReviewPrompt).toHaveBeenCalledWith("docs/plan.md", "/workspace", undefined)
   })
 
   it("executes implement task", async () => {

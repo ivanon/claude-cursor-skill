@@ -104,22 +104,17 @@ async function main() {
       process.exit(1)
     }
 
-    const isImplement = intent.taskType === "implement"
+    let streamed = false
 
-    const result = await executeSkill(intent, options.cwd, (event) => {
-      if (!isImplement) return
+    await executeSkill(intent, options.cwd, (event) => {
       if (event.type === "assistant_delta" && event.text) {
         process.stdout.write(event.text)
+        streamed = true
       }
     })
 
-    if (isImplement) {
-      console.log("") // newline after streamed output
-      if (intent.outputFile) {
-        console.log(`Implementation written by cursor agent.`)
-      }
-    } else {
-      console.log(result)
+    if (streamed) {
+      console.log("")
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
