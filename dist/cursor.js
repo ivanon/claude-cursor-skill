@@ -7,11 +7,9 @@ export async function runCursorAgent(options) {
     const agentOptions = {
         apiKey,
         name: "Claude Cursor Skill",
+        model: { id: model },
         local: { cwd },
     };
-    if (model && model !== "auto") {
-        agentOptions.model = { id: model };
-    }
     const agent = await withRetry(() => Agent.create(agentOptions), "Agent.create");
     let run;
     try {

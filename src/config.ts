@@ -9,9 +9,11 @@ export class ConfigError extends Error {
   }
 }
 
+export const DEFAULT_MODEL = "composer-2"
+
 export type CursorConfig = {
   apiKey: string
-  defaultModel?: string
+  defaultModel: string
 }
 
 export function resolveConfig(): CursorConfig {
@@ -23,7 +25,7 @@ export function resolveConfig(): CursorConfig {
     validateKey(envKey)
     return {
       apiKey: envKey,
-      defaultModel: envModel ?? fileSettings?.defaultModel,
+      defaultModel: envModel ?? fileSettings?.defaultModel ?? DEFAULT_MODEL,
     }
   }
 
@@ -31,7 +33,7 @@ export function resolveConfig(): CursorConfig {
     validateKey(fileSettings.apiKey)
     return {
       apiKey: fileSettings.apiKey,
-      defaultModel: envModel ?? fileSettings.defaultModel,
+      defaultModel: envModel ?? fileSettings.defaultModel ?? DEFAULT_MODEL,
     }
   }
 

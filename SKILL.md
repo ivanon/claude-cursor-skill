@@ -54,7 +54,7 @@ cursor-agent review src/auth.ts --verbose
 
 ```bash
 export CURSOR_API_KEY="crsr_..."  # 从 https://cursor.com/dashboard/integrations 获取
-export CURSOR_MODEL="composer-3"  # 可选，默认 auto
+export CURSOR_MODEL="composer-3"  # 可选，默认 composer-2
 ```
 
 或创建配置文件 `~/.cursor-skill/settings.json`：

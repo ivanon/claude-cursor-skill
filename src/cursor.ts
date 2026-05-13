@@ -27,11 +27,8 @@ export async function runCursorAgent(options: RunCursorAgentOptions): Promise<vo
   const agentOptions: Record<string, unknown> = {
     apiKey,
     name: "Claude Cursor Skill",
+    model: { id: model },
     local: { cwd },
-  }
-
-  if (model && model !== "auto") {
-    agentOptions.model = { id: model }
   }
 
   const agent = await withRetry(() => Agent.create(agentOptions), "Agent.create")

@@ -105,4 +105,11 @@ describe("resolveConfig", () => {
     const config = resolveConfig()
     expect(config.defaultModel).toBe("composer-2")
   })
+
+  it("uses default model 'composer-2' when no model is configured", () => {
+    process.env.CURSOR_API_KEY = "crsr_env_key"
+    delete process.env.CURSOR_MODEL
+    const config = resolveConfig()
+    expect(config.defaultModel).toBe("composer-2")
+  })
 })

@@ -40,7 +40,7 @@ echo '{"cursorApiKey":"crsr_..."}' > ~/.cursor-skill/settings.json
 
 ### 4. Model Selection (optional)
 
-Default is `auto` (let Cursor choose). Override via:
+Default is `composer-2`. Override via:
 ```bash
 export CURSOR_MODEL="composer-3"
 ```

@@ -45,7 +45,7 @@ A Claude Code skill that bridges Claude's conversational interface to the Cursor
 **Model selection priority:**
 1. `CURSOR_MODEL` environment variable
 2. `defaultModel` in `~/.cursor-skill/settings.json`
-3. Default `auto` (omit model param, let Cursor choose)
+3. Default `composer-2`
 
 ## Error Handling
 
