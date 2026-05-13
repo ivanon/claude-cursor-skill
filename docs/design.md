@@ -16,6 +16,8 @@ A Claude Code skill that lets users invoke Cursor's coding agent via natural lan
 - Cloud agent execution (GitHub-based)
 - Interactive multi-turn sessions (single-shot tasks only)
 - Web UI or TUI interface
+- Paths outside the current workspace (all file references must be resolvable within `cwd`)
+- PR-level diff review (comparing branches or PR diffs — not in v1)
 
 ## Architecture
 
@@ -59,7 +61,7 @@ Review the file at: {filePath}
 
 **User prompt (plan-based code review):**
 ```
-Review the codebase implementation against the plan at {planFilePath}.
+Review the codebase implementation against the plan at {planFile}.
 Start from the repository root {cwd}. Check that the implementation
 matches the plan, identify deviations, missing features, and suggest fixes.
 ```
@@ -112,6 +114,10 @@ Claude extracts the following from user natural language:
 - File paths are extracted from the message (regex for path-like strings)
 - If no file path is found, the skill uses the file path provided by Claude Code through the function call context. The skill itself does not attempt to detect the active file; it relies on Claude to inject this context.
 - Output file is extracted after keywords like "输出到", "保存到", "output to"
+
+**Review prompt selection:**
+- **Single-file review:** Use when `planFile` is not set. Cursor reviews only `targetFile`.
+- **Plan-based review:** Use when the user's message contains a plan/design document path and a phrase like "根据", "对照", "按照", "against". Cursor compares the entire codebase (from `cwd`) against the plan.
 
 ## Configuration
 
@@ -186,6 +192,8 @@ const result = await run.wait()
 |----------|----------|
 | Missing/invalid API Key | Prompt user to set `CURSOR_API_KEY` or run config |
 | Target file not found | Check before invoking Cursor, error early |
+| Plan file not found (plan-based review) | Error: "Plan file {planFile} not found" |
+| Plan file outside workspace (plan-based review) | Error: "Plan file must be within the current workspace" |
 | Cursor execution timeout | 5-minute timeout, cancel run, report to user |
 | Cursor execution failure | Show error status and message |
 | Network error | Retry 3 times, then fail with message |
