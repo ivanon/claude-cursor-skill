@@ -102,4 +102,46 @@ describe("runCursorAgent", () => {
 
     expect(mockCancel).toHaveBeenCalled()
   })
+
+  it("does not cancel when run does not support cancellation", async () => {
+    mockSend.mockResolvedValue({
+      stream: mockStream,
+      wait: mockWait,
+      cancel: mockCancel,
+      supports: (feature: string) => feature !== "cancel",
+    })
+
+    mockStream.mockImplementation(async function* () {
+      yield { type: "assistant", message: { content: [{ type: "text", text: "OK" }] } }
+    })
+    mockWait.mockResolvedValue({ status: "FINISHED" })
+
+    await runCursorAgent({
+      apiKey: "crsr_test",
+      prompt: "test",
+      cwd: "/workspace",
+      onEvent: () => {},
+      timeoutMs: 50,
+    })
+
+    expect(mockCancel).not.toHaveBeenCalled()
+  })
+
+  it("disposes agent even when stream throws", async () => {
+    mockStream.mockImplementation(async function* () {
+      throw new Error("Stream error")
+    })
+    mockWait.mockResolvedValue({ status: "ERROR" })
+
+    await expect(
+      runCursorAgent({
+        apiKey: "crsr_test",
+        prompt: "test",
+        cwd: "/workspace",
+        onEvent: () => {},
+      })
+    ).rejects.toThrow()
+
+    expect(mockDispose).toHaveBeenCalled()
+  })
 })

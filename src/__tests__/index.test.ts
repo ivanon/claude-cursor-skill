@@ -17,7 +17,7 @@ vi.mock("node:fs", () => ({
 }))
 
 import { resolveConfig } from "../config.js"
-import { buildReviewPrompt, buildImplementPrompt } from "../prompts.js"
+import { buildReviewPrompt, buildPlanBasedReviewPrompt, buildImplementPrompt } from "../prompts.js"
 import { runCursorAgent } from "../cursor.js"
 import { formatEvents, saveToFile } from "../output.js"
 import { existsSync } from "node:fs"
@@ -76,6 +76,7 @@ describe("parseIntent", () => {
 describe("executeSkill", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(existsSync).mockReturnValue(true)
     vi.mocked(resolveConfig).mockReturnValue({ apiKey: "crsr_test" })
     vi.mocked(buildReviewPrompt).mockReturnValue("review prompt")
     vi.mocked(buildImplementPrompt).mockReturnValue("implement prompt")
@@ -129,5 +130,37 @@ describe("executeSkill", () => {
     }
 
     await expect(executeSkill(intent, "/workspace")).rejects.toThrow("File not found: missing.ts")
+  })
+
+  it("uses plan-based review when planFile is set", async () => {
+    vi.mocked(runCursorAgent).mockImplementation(async ({ onEvent }) => {
+      onEvent({ type: "result", status: "FINISHED" })
+    })
+
+    const intent: ParsedIntent = {
+      taskType: "review",
+      planFile: "docs/plan.md",
+      targetFile: "src/auth.ts",
+      userRequest: "根据 docs/plan.md 评审 src/auth.ts",
+    }
+
+    await executeSkill(intent, "/workspace")
+
+    expect(buildPlanBasedReviewPrompt).toHaveBeenCalledWith("docs/plan.md", "/workspace")
+  })
+
+  it("executes implement task", async () => {
+    vi.mocked(runCursorAgent).mockImplementation(async ({ onEvent }) => {
+      onEvent({ type: "result", status: "FINISHED" })
+    })
+
+    const intent: ParsedIntent = {
+      taskType: "implement",
+      userRequest: "实现登录功能",
+    }
+
+    await executeSkill(intent, "/workspace")
+
+    expect(buildImplementPrompt).toHaveBeenCalledWith("实现登录功能", undefined, "/workspace")
   })
 })
