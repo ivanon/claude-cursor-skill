@@ -106,11 +106,7 @@ async function main() {
 
     const result = await executeSkill(intent, options.cwd)
 
-    if (!options.output) {
-      console.log(result)
-    } else {
-      console.log(`Result saved to: ${options.output}`)
-    }
+    console.log(result)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error(`Error: ${message}`)

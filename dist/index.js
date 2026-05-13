@@ -67,7 +67,7 @@ export async function executeSkill(intent, cwd) {
         model: config.defaultModel,
     });
     const result = formatEvents(events, { verbose: intent.verbose });
-    if (intent.outputFile) {
+    if (intent.outputFile && intent.taskType === "review") {
         await saveToFile(result, intent.outputFile);
     }
     return result;

@@ -95,7 +95,7 @@ export async function executeSkill(
 
   const result = formatEvents(events, { verbose: intent.verbose })
 
-  if (intent.outputFile) {
+  if (intent.outputFile && intent.taskType === "review") {
     await saveToFile(result, intent.outputFile)
   }
 
