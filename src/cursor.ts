@@ -15,6 +15,7 @@ export type RunCursorAgentOptions = {
   onEvent: (event: CursorEvent) => void
   timeoutMs?: number
   model?: string
+  verbose?: boolean
 }
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000
@@ -109,46 +110,51 @@ function sleep(ms: number): Promise<void> {
 }
 
 function emitEvent(sdkEvent: unknown, emit: (event: CursorEvent) => void) {
-  const event = sdkEvent as Record<string, unknown>
+  try {
+    const event = sdkEvent as Record<string, unknown>
 
-  switch (event.type) {
-    case "assistant": {
-      const message = event.message as { content: Array<{ type: string; text?: string }> }
-      for (const block of message.content) {
-        if (block.type === "text" && block.text) {
-          emit({ type: "assistant_delta", text: block.text })
+    switch (event.type) {
+      case "assistant": {
+        const message = event.message as { content: Array<{ type: string; text?: string }> } | undefined
+        if (!Array.isArray(message?.content)) return
+        for (const block of message.content) {
+          if (block.type === "text" && block.text) {
+            emit({ type: "assistant_delta", text: block.text })
+          }
         }
+        break
       }
-      break
+      case "thinking": {
+        const text = event.text as string
+        if (text) emit({ type: "thinking", text })
+        break
+      }
+      case "tool_call": {
+        emit({
+          type: "tool",
+          name: String(event.name ?? "unknown"),
+          status: String(event.status ?? "unknown"),
+        })
+        break
+      }
+      case "status": {
+        emit({
+          type: "status",
+          status: String(event.status ?? "unknown"),
+          message: event.message as string | undefined,
+        })
+        break
+      }
+      case "task": {
+        emit({
+          type: "task",
+          status: event.status as string | undefined,
+          text: event.text as string | undefined,
+        })
+        break
+      }
     }
-    case "thinking": {
-      const text = event.text as string
-      if (text) emit({ type: "thinking", text })
-      break
-    }
-    case "tool_call": {
-      emit({
-        type: "tool",
-        name: String(event.name ?? "unknown"),
-        status: String(event.status ?? "unknown"),
-      })
-      break
-    }
-    case "status": {
-      emit({
-        type: "status",
-        status: String(event.status ?? "unknown"),
-        message: event.message as string | undefined,
-      })
-      break
-    }
-    case "task": {
-      emit({
-        type: "task",
-        status: event.status as string | undefined,
-        text: event.text as string | undefined,
-      })
-      break
-    }
+  } catch {
+    // Silently skip malformed events to avoid interrupting the run
   }
 }

@@ -15,6 +15,7 @@ export type ParsedIntent = {
   planFile?: string
   outputFile?: string
   userRequest: string
+  verbose?: boolean
 }
 
 export function parseIntent(input: string): ParsedIntent {
@@ -31,11 +32,14 @@ export function parseIntent(input: string): ParsedIntent {
   const outputMatch = input.match(/(?:输出到|保存到|output to)\s+(\S+)/)
   const outputFile = outputMatch?.[1]
 
+  const verbose = /\b(verbose|详细)\b/i.test(input)
+
   return {
     taskType,
     targetFile,
     planFile,
     outputFile,
+    verbose,
     userRequest: input,
   }
 }
@@ -87,9 +91,10 @@ export async function executeSkill(
     cwd,
     onEvent: (e) => events.push(e),
     model: config.defaultModel,
+    verbose: intent.verbose,
   })
 
-  const result = formatEvents(events)
+  const result = formatEvents(events, { verbose: intent.verbose })
 
   if (intent.outputFile) {
     await saveToFile(result, intent.outputFile)

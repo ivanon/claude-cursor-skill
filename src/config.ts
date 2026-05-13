@@ -36,7 +36,7 @@ export function resolveConfig(): CursorConfig {
   }
 
   throw new ConfigError(
-    "Cursor API key not found. Set CURSOR_API_KEY environment variable or configure ~/.cursor-skill/settings.json."
+    "Cursor API key not found. Set CURSOR_API_KEY environment variable or add cursorApiKey to ~/.cursor-skill/settings.json."
   )
 }
 
