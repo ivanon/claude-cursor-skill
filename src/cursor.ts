@@ -14,18 +14,25 @@ export type RunCursorAgentOptions = {
   cwd: string
   onEvent: (event: CursorEvent) => void
   timeoutMs?: number
+  model?: string
 }
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000
 
 export async function runCursorAgent(options: RunCursorAgentOptions): Promise<void> {
-  const { apiKey, prompt, cwd, onEvent, timeoutMs = DEFAULT_TIMEOUT_MS } = options
+  const { apiKey, prompt, cwd, onEvent, timeoutMs = DEFAULT_TIMEOUT_MS, model } = options
 
-  const agent = await Agent.create({
+  const agentOptions: Record<string, unknown> = {
     apiKey,
     name: "Claude Cursor Skill",
     local: { cwd },
-  })
+  }
+
+  if (model && model !== "auto") {
+    agentOptions.model = { id: model }
+  }
+
+  const agent = await Agent.create(agentOptions)
 
   const run = await agent.send(prompt)
   const timeoutId = setTimeout(() => {

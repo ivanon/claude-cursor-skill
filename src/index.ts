@@ -86,6 +86,7 @@ export async function executeSkill(
     prompt,
     cwd,
     onEvent: (e) => events.push(e),
+    model: config.defaultModel,
   })
 
   const result = formatEvents(events)
