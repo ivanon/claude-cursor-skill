@@ -94,8 +94,9 @@ function isRetryableError(error: unknown): boolean {
       msg.includes("network") ||
       msg.includes("econnrefused") ||
       msg.includes("econnreset") ||
-      msg.includes("ENOTFOUND") ||
-      msg.includes("5")
+      msg.includes("enotfound") ||
+      /status code 5\d\d/.test(msg) ||
+      /\b5xx\b/.test(msg)
     )
   }
   return false
