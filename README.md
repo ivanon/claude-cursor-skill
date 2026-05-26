@@ -17,13 +17,29 @@ A Claude Code skill that lets you invoke Cursor's coding agent via natural langu
 npm install -g claude-cursor-agent-skill
 ```
 
-### 2. Register Skill (for Claude Code)
+### 2. Install ripgrep (system dependency)
+
+The Cursor SDK requires `ripgrep` for `.gitignore`/`.cursorignore` processing.
+
+**macOS:**
+```bash
+brew install ripgrep
+```
+
+**Linux (Debian/Ubuntu):**
+```bash
+sudo apt-get install ripgrep
+```
+
+**Other platforms:** see [ripgrep installation guide](https://github.com/BurntSushi/ripgrep#installation).
+
+### 3. Register Skill (for Claude Code)
 
 ```bash
 npx skills add ivanon/claude-cursor-skill -y -g
 ```
 
-### 3. Configure Cursor API Key
+### 4. Configure Cursor API Key
 
 Get a key from the [Cursor integrations dashboard](https://cursor.com/dashboard/integrations).
 
@@ -38,7 +54,7 @@ mkdir -p ~/.cursor-skill
 echo '{"cursorApiKey":"crsr_..."}' > ~/.cursor-skill/settings.json
 ```
 
-### 4. Model Selection (optional)
+### 5. Model Selection (optional)
 
 Default is `composer-2`. Override via:
 ```bash
